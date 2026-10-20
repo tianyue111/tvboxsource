@@ -1,0 +1,51 @@
+name: 更新 TVBox 源
+
+on:
+  schedule:
+    # 每天 20:17 UTC = 北京时间次日 04:17 执行
+    - cron: '17 20 * * *'
+  workflow_dispatch:        # 支持手动触发
+  push:
+    paths:
+      - 'sources.txt'
+      - 'update.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tvbox-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 生成源
+        env:
+          # 可选: 在仓库 Settings -> Secrets 里配置 CF_PROXY 以突破海外IP封锁
+          CF_PROXY: ${{ secrets.CF_PROXY }}
+          MAX_SOURCES: '300'
+          MAX_COLLECT: '80'
+        run: python3 update.py
+
+      - name: 提交并推送
+        run: |
+          git config user.name  "tvbox-bot"
+          git config user.email "tvbox-bot@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "本次无变更"
+            exit 0
+          fi
+          git commit -m "chore: 自动更新源 $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push origin HEAD:${{ github.ref_name }}

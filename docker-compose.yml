@@ -1,0 +1,17 @@
+services:
+  tvboxsource:
+    image: ghcr.io/你的GitHub用户名/tvboxsource:latest
+    # 也可以本地构建: build: .
+    container_name: tvboxsource
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai
+      - PORT=8787
+      - UPDATE_INTERVAL_HOURS=24
+      - RUN_ON_START=1
+      # 可选: 突破采集站海外 IP 封锁
+      # - CF_PROXY=https://你的worker.workers.dev
+    ports:
+      - "8787:8787"
+    volumes:
+      - /mnt/user/appdata/tvboxsource:/data
