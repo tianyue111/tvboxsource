@@ -1,0 +1,97 @@
+{
+  "spider": "",
+  "sites": [
+    {
+      "key": "🍏无印",
+      "name": "[5719KB/s|760ms|稳] 🍏无印",
+      "type": 1,
+      "api": "https://api.wsyzy.net/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "🍊湿园",
+      "name": "[2571KB/s|464ms|稳] 🍊湿园",
+      "type": 1,
+      "api": "https://xxavs.com/api.php/provide/vod/at/json",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "🍊91",
+      "name": "[2452KB/s|495ms|稳] 🍊91",
+      "type": 1,
+      "api": "https://91av.cyou/api.php/provide/vod",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "🍊鸡坤",
+      "name": "[2447KB/s|641ms|稳] 🍊鸡坤",
+      "type": 1,
+      "api": "https://jkunzyapi.com/api.php/provide/vod/at/json",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "🍏金鹰",
+      "name": "[2054KB/s|1852ms|稳] 🍏金鹰",
+      "type": 1,
+      "api": "https://jyzyapi.com/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "如意资源网",
+      "name": "[1839KB/s|693ms|稳] 如意资源网",
+      "type": 0,
+      "api": "https://cj.rycjapi.com/api.php/provide/vod/at/xml/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "🍏光速",
+      "name": "[1807KB/s|288ms|稳] 🍏光速",
+      "type": 1,
+      "api": "https://api.guangsuapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "🍊极品",
+      "name": "[1691KB/s|600ms|稳] 🍊极品",
+      "type": 1,
+      "api": "https://jipinvip.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "🍏红牛",
+      "name": "[1576KB/s|2899ms|稳] 🍏红牛",
+      "type": 1,
+      "api": "https://www.hongniuzy2.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "🍊黑料",
+      "name": "[1520KB/s|1055ms|稳] 🍊黑料",
+      "type": 1,
+      "api": "https://www.heiliaozyapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    }
+  ],
+  "lives": [],
+  "parses": []
+}
