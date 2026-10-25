@@ -1,7 +1,7 @@
 {
-  "updated": "2026-10-24 22:32:20",
+  "updated": "2026-10-25 22:37:17",
   "sources_available": 89,
-  "collect_available": 60,
-  "sites_full": 1360,
-  "spider": "http://oss4liview.moji.com/thd_file/2026/10/23/b1a69d9c535fd309388e390b0b1e0749.jpg;md5;3c264c629e02273b9ad61e769218c508"
+  "collect_available": 34,
+  "sites_full": 1199,
+  "spider": "https://gitee.com/starlinkapi/jar/raw/master/jar/starlink.jar"
 }
