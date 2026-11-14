@@ -1,7 +1,10 @@
 {
-  "updated": "2026-11-14 00:54:59",
+  "updated": "2026-11-14 09:37:15",
   "sources_available": 89,
-  "collect_available": 33,
-  "sites_full": 1287,
-  "spider": "http://oss4liview.moji.com/thd_file/2026/11/12/7b563c7039830e7c712e93f27fd2e102.jpg;md5;541366f5860ceb66e1c3005f5a299afe"
+  "collect_available": 28,
+  "sites_full": 200,
+  "spider": "",
+  "spider_removed": true,
+  "jar_dependent_sites_removed": 1829,
+  "ad_keyword_sites_removed": 3
 }
