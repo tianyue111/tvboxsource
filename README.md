@@ -102,10 +102,11 @@ git push -u origin main
 适合想完全自己掌控、或不想依赖 GitHub 的情况。容器内自带定时器，每天自动更新，
 并通过 HTTP 直接给局域网里的电视盒子提供配置。
 
-### 方式 1：直接用 GitHub Actions 构建好的镜像（最省事）
+### 方式 1：使用 GHCR 上已构建的镜像（手动构建）
 
-本项目的 `.github/workflows/docker.yml` 会在每次推送时把镜像发布到 GHCR：
-`ghcr.io/你的用户名/tvboxsource:latest`。
+本项目的 `.github/workflows/docker.yml` 默认**不会自动运行**，避免和每日更新任务重复。
+需要镜像时，在 GitHub → **Actions → 构建并推送 Docker 镜像 → Run workflow** 手动跑一次，
+镜像会发布到 GHCR：`ghcr.io/你的用户名/tvboxsource:latest`。
 
 在 Unraid 里：
 1. **Docker → Add Container**
@@ -247,4 +248,4 @@ https://example.com/tvbox.json
 | `Dockerfile` / `docker-compose.yml` | 容器构建 |
 | `cloudflare/worker.js` | 可选代理 |
 | `.github/workflows/update.yml` | 每天自动更新 + 干净 JAR / 去广告校验 |
-| `.github/workflows/docker.yml` | 自动构建并推送镜像到 GHCR |
+| `.github/workflows/docker.yml` | 手动构建并推送镜像到 GHCR（默认不自动跑） |

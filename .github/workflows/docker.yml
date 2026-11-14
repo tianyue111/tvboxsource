@@ -1,14 +1,7 @@
 name: 构建并推送 Docker 镜像 (Unraid 用)
 
 on:
-  push:
-    branches: [main, master]
-    paths:
-      - 'Dockerfile'
-      - 'app.py'
-      - 'update.py'
-      - 'sources.txt'
-      - '.github/workflows/docker.yml'
+  # 仅手动触发；平时只保留“更新 TVBox 源”一个自动任务
   workflow_dispatch:
 
 permissions:
