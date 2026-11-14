@@ -1,8 +1,16 @@
 {
   "storeHouse": [
     {
-      "sourceName": "全量版(含干净爬虫)",
+      "sourceName": "全部(含干净爬虫)",
       "sourceUrl": "https://raw.githubusercontent.com/tianyue111/tvboxsource/main/tvbox_full.json"
+    },
+    {
+      "sourceName": "非成人全部",
+      "sourceUrl": "https://raw.githubusercontent.com/tianyue111/tvboxsource/main/tvbox_nonadult.json"
+    },
+    {
+      "sourceName": "成人全部",
+      "sourceUrl": "https://raw.githubusercontent.com/tianyue111/tvboxsource/main/tvbox_adult.json"
     },
     {
       "sourceName": "简洁版(无爬虫)",
