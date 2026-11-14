@@ -1,10 +1,12 @@
 {
-  "updated": "2026-11-14 09:37:15",
-  "sources_available": 89,
-  "collect_available": 28,
-  "sites_full": 200,
-  "spider": "",
-  "spider_removed": true,
-  "jar_dependent_sites_removed": 1829,
-  "ad_keyword_sites_removed": 3
+  "updated": "2026-11-14 12:18:12",
+  "sources_available": 88,
+  "collect_available": 33,
+  "sites_full": 575,
+  "spider": "https://raw.githubusercontent.com/tianyue111/tvboxsource/main/spider/custom_spider.jar",
+  "spider_kind": "clean-catvodspider",
+  "spider_classes": 119,
+  "unsupported_spider_sites_removed": 1247,
+  "disallowed_type_sites_removed": 0,
+  "ad_keyword_sites_removed": 16
 }

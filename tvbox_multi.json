@@ -1,11 +1,11 @@
 {
   "storeHouse": [
     {
-      "sourceName": "全量版(无插件)",
+      "sourceName": "全量版(含干净爬虫)",
       "sourceUrl": "https://raw.githubusercontent.com/tianyue111/tvboxsource/main/tvbox_full.json"
     },
     {
-      "sourceName": "简洁版(无插件)",
+      "sourceName": "简洁版(无爬虫)",
       "sourceUrl": "https://raw.githubusercontent.com/tianyue111/tvboxsource/main/tvbox.json"
     }
   ]
