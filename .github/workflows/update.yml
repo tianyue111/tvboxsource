@@ -61,7 +61,7 @@ jobs:
           ADULT_MARKERS = ("🔞", "18+", "成人", "番号", "麻豆", "天美",
                            "果冻传媒", "星空传媒", "精东", "porn", "pron",
                            "jable", "javdb", "hanime", "91porn", "色播",
-                           "肉视频", "女优")
+                           "肉视频", "女优", "clun.top")
           problems = []
 
           def check_sites(name, sites, allowed_types):

@@ -111,7 +111,7 @@ ADULT_PATTERNS = [
     r"(?<![a-z])lav(?![a-z])",
     r"福利视频", r"福利片", r"福利影院", r"福利资源", r"肉视频",
     r"国产传媒", r"几个传媒", r"美腿丝袜", r"花活",
-    r"(?<![a-z])xhm(?![a-z])", r"推特",
+    r"(?<![a-z])xhm(?![a-z])", r"推特", r"clun\.top",
 ]
 _extra_adult = os.environ.get("ADULT_KEYWORDS", "").strip()
 if _extra_adult:

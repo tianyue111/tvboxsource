@@ -204,7 +204,7 @@ https://example.com/tvbox.json
 
 **Q：成人 / 非成人是怎么分的？**
 按站点/直播的 `key`、`name`、`api`、`url`、`ext` 做关键字匹配（`🔞`、`18+`、`成人`、`番号`、
-`麻豆`、`天美`、`porn`、`jable`、`91porn`、`色播` 等）。分类是启发式的，
+`麻豆`、`天美`、`porn`、`jable`、`91porn`、`色播`、`clun.top` 等）。分类是启发式的，
 如果漏掉或误判，可以在 workflow 的 `ADULT_KEYWORDS` 环境变量里用逗号追加关键字。
 `tvbox_nonadult.json` 会再经过一次强关键字校验，避免成人站点混入。
 
