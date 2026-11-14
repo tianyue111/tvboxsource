@@ -5,8 +5,9 @@ TVBox 自建聚合源 —— 自动抓取 / 合并 / 播放测速 / 每日更新
 
 特点:
   * 纯 Python 标准库实现, 不需要 curl / pip 安装任何东西
-  * 默认完全不加载外部 spider JAR, 彻底去掉"扫码看广告才能激活"的插件
-  * 只保留 type 0/1 直连采集站; 依赖 JAR 的 type 3/4 站点会被丢弃
+  * 保留爬虫站(type 3/4), 但使用本仓库自带的干净 CatVodSpider JAR,
+    不再引用带 wexguard/扫码广告激活的第三方加固 JAR
+  * type 3 站点按 JAR 实际类名过滤, 只保留能加载的类
   * 自动过滤命中"扫码/看广告/激活/卡密/付费"等关键字的站点、直播与解析
   * 支持自动发现: 从抓到的多仓配置(storeHouse)里继续发现新的源地址
   * 真实播放测速: m3u8 -> 媒体列表 -> 下载 ts 分片 -> 计算持续速度
@@ -28,6 +29,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urljoin, urlparse
 
@@ -53,21 +55,33 @@ DISCOVER_LIMIT = int(os.environ.get("DISCOVER_LIMIT", "80"))
 # 置顶采集站(按关键字匹配 api 域名), 会排在最前面
 PINNED = [x for x in os.environ.get("PINNED", "suoniapi.com,360zy.com").split(",") if x]
 
-# ── 去"扫码看广告"策略 (默认开启, 请勿随意关闭) ──
-# 旧版会把上游配置里的 spider 字段原样合并。那个 JAR(常伪装成 .jpg;md5;xxx,
-# 并用 wexguard 加固) 一旦被客户端加载, 就会弹出"扫码看广告才能激活"。
-# 本脚本默认:
-#   1) 输出里的 spider 永远为空, 绝不引用任何第三方 JAR;
-#   2) 只保留 type 0/1(直连采集 API), 丢弃依赖 JAR 的 type 3/4 站点;
-#   3) 命中广告/扫码/激活等关键字的站点、直播、解析、仓库一律过滤。
-# 如果你有自己编译、可审计的可信 JAR, 可用 SPIDER_URL 显式启用(风险自负)。
-SPIDER_URL = os.environ.get("SPIDER_URL", "").strip()
-_DEFAULT_TYPES = "0,1,3,4" if SPIDER_URL else "0,1"
+# ── 干净爬虫 JAR (CatVodSpider) ──
+# 旧版会把上游配置里的 spider 字段原样合并。那个 JAR 常伪装成 .jpg;md5;xxx,
+# 并用 wexguard 加固, 加载后会强制"扫码看广告才能激活"。
+# 本仓库改为自带一个从公开源码编译的干净 CatVodSpider:
+#   spider/custom_spider.jar   (来源/校验见 spider/README.md)
+# 默认 spider 指向本仓库的 JAR, 不再引用任何第三方加固 JAR。
+# type 3 站点会按 JAR 里的实际类名过滤, 不支持的类直接丢弃, 避免坏站。
+SPIDER_JAR = os.path.join(WORK_DIR, "spider", "custom_spider.jar")
+_ENV_SPIDER = os.environ.get("SPIDER_URL", "").strip()
+if _ENV_SPIDER:
+    SPIDER_URL = _ENV_SPIDER
+elif os.environ.get("GITHUB_REPOSITORY"):
+    _ref = os.environ.get("GITHUB_REF_NAME", "main")
+    SPIDER_URL = (f"https://raw.githubusercontent.com/"
+                  f"{os.environ['GITHUB_REPOSITORY']}/{_ref}/spider/custom_spider.jar")
+elif os.path.exists(SPIDER_JAR):
+    SPIDER_URL = "./spider/custom_spider.jar"
+else:
+    SPIDER_URL = ""
+SPIDER_ENABLED = bool(SPIDER_URL)
+
+_DEFAULT_TYPES = "0,1,3,4" if SPIDER_ENABLED else "0,1"
 ALLOWED_TYPES = {int(x) for x in os.environ.get("ALLOWED_TYPES", _DEFAULT_TYPES).split(",")
                  if x.strip().isdigit()}
-ALLOWED_TYPES &= ({0, 1, 3, 4} if SPIDER_URL else {0, 1})
+ALLOWED_TYPES &= ({0, 1, 3, 4} if SPIDER_ENABLED else {0, 1})
 if not ALLOWED_TYPES:
-    ALLOWED_TYPES = {0, 1, 3, 4} if SPIDER_URL else {0, 1}
+    ALLOWED_TYPES = {0, 1, 3, 4} if SPIDER_ENABLED else {0, 1}
 
 AD_BLOCK_DOMAINS = [x.strip().lower() for x in os.environ.get(
     "AD_BLOCK_DOMAINS", "clbug.com,moji.com,oss4liview.moji.com").split(",") if x.strip()]
@@ -208,18 +222,60 @@ def is_ad_gated_spider(spider: str) -> bool:
     return is_blocked_url(s) or is_blocked_text(s) or looks_like_binary_plugin(s)
 
 
+def load_spider_classes(path: str):
+    """从 DEX JAR 里提取 com.github.catvod.spider.* 类名。"""
+    names = set()
+    if not path or not os.path.exists(path):
+        return names
+    try:
+        with zipfile.ZipFile(path) as z:
+            for entry in z.namelist():
+                if not entry.endswith(".dex"):
+                    continue
+                data = z.read(entry)
+                for m in re.findall(rb"Lcom/github/catvod/spider/([A-Za-z0-9_$]+);", data):
+                    names.add(m.decode("ascii", errors="ignore"))
+    except Exception as e:  # noqa: BLE001
+        print(f"  [warn] 读取爬虫 JAR 失败: {e}", file=sys.stderr)
+    return names
+
+
+SPIDER_CLASSES = load_spider_classes(SPIDER_JAR)
+
+
+def spider_api_supported(api) -> bool:
+    """判断 type 3 站点的 api 是否能被当前 JAR / JS 引擎加载。"""
+    a = str(api or "").strip()
+    if not a:
+        return False
+    if a.startswith("csp_"):
+        cls = a[4:].split("_", 1)[0]
+        return (not SPIDER_CLASSES) or cls in SPIDER_CLASSES
+    low = a.lower()
+    # JS/Python 爬虫由客户端引擎执行, 不依赖 JAR
+    if (low.endswith(".js") or low.startswith(("js:", "py:", "hipy:", "./"))
+            or low.startswith(("http://", "https://"))):
+        return True
+    # 纯类名
+    return (not SPIDER_CLASSES) or a.split("_", 1)[0] in SPIDER_CLASSES
+
+
 def sanitize_site(site: dict):
-    """站点清洗: 只保留不依赖第三方爬虫 JAR 的安全站点。"""
+    """站点清洗: 保留 type 0/1, 以及当前干净 JAR 支持的 type 3/4。"""
     if not isinstance(site, dict):
         return None
     st = site.get("type", -1)
     if st not in ALLOWED_TYPES:
+        return None
+    if st in (3, 4) and not SPIDER_ENABLED:
         return None
     # 站点自带 spider/jar 字段的一律拒绝(防止绕过顶层 spider 检查)
     if is_ad_gated_spider(site.get("spider") or site.get("spiderUrl") or site.get("jar") or ""):
         return None
     api = site.get("api", "")
     if st in (0, 1) and not (isinstance(api, str) and api.startswith("http")):
+        return None
+    if st == 3 and not spider_api_supported(api):
         return None
 
     text = " ".join(str(site.get(k, "")) for k in
@@ -231,8 +287,12 @@ def sanitize_site(site: dict):
     for field in ("jar", "spider", "spiderUrl"):
         clean.pop(field, None)
     ext = clean.get("ext")
-    if ext is not None and (looks_like_plugin(ext) or is_blocked_url(str(ext))):
-        clean.pop("ext", None)
+    if ext is not None:
+        if looks_like_binary_plugin(ext) or is_blocked_url(str(ext)):
+            clean.pop("ext", None)
+        elif st in (0, 1) and looks_like_plugin(ext):
+            # type 0/1 的 ext 只应是普通参数; 出现 .js 视为可疑插件
+            clean.pop("ext", None)
     if not str(clean.get("api", "")).strip():
         return None
     return clean
@@ -484,7 +544,7 @@ def main() -> int:
     all_sites, all_lives, all_parses = [], [], []
     site_keys, live_keys, parse_keys = set(), set(), set()
     collect_sources = {}  # api -> (source_name, stype)
-    dropped = {"jar_type": 0, "ad": 0, "live": 0, "parse": 0}
+    dropped = {"jar_type": 0, "unsupported": 0, "ad": 0, "live": 0, "parse": 0}
     multi_safe = set()    # 未声明 spider JAR 的源, 才允许进入多仓版
 
     for name, url, lat, body in avail:
@@ -506,6 +566,9 @@ def main() -> int:
             st = s.get("type", -1)
             if st not in ALLOWED_TYPES:
                 dropped["jar_type"] += 1
+                continue
+            if st == 3 and not spider_api_supported(s.get("api", "")):
+                dropped["unsupported"] += 1
                 continue
             clean = sanitize_site(s)
             if not clean:
@@ -548,8 +611,10 @@ def main() -> int:
             multi_safe.add(url)
 
     print(f"  合并: {len(all_sites)} 站点 / {len(all_lives)} 直播 / {len(all_parses)} 解析")
-    print(f"  去扫码广告过滤: 丢弃 {dropped['jar_type']} 个依赖 JAR 的站点 / "
+    print(f"  去扫码广告过滤: 丢弃 {dropped['jar_type']} 个类型不允许的站点 / "
+          f"{dropped['unsupported']} 个当前 JAR 不支持的爬虫站 / "
           f"{dropped['ad']} 个命中广告关键字 / {dropped['live']} 直播 / {dropped['parse']} 解析")
+    print(f"  干净爬虫 JAR: {len(SPIDER_CLASSES)} 个类, spider={SPIDER_URL or '无'}")
 
     # ── 3. 采集站播放测速 ──
     apis = list(collect_sources.items())[:MAX_COLLECT]
@@ -632,8 +697,8 @@ def main() -> int:
         s.pop("_speed_ttfb", None)
 
     # ── 4. 全量版 tvbox_full.json ──
-    # 默认 spider 为空 => 客户端不会下载/加载任何爬虫 JAR,
-    # 也就不会被 "扫码看广告才能激活" 的插件控制。
+    # 全量版保留爬虫站(type 3/4), 但 spider 指向本仓库自带的干净 JAR,
+    # 不再引用任何第三方加固 JAR, 因此不会出现"扫码看广告才能激活"。
     full_json = {"spider": SPIDER_URL, "sites": all_sites,
                  "lives": all_lives, "parses": all_parses}
     _write(os.path.join(OUT_DIR, "tvbox_full.json"), full_json)
@@ -641,11 +706,17 @@ def main() -> int:
     for s in all_sites:
         types[s.get("type", -1)] = types.get(s.get("type", -1), 0) + 1
     print(f"  全量版: {len(all_sites)} 站点 (采集:{types.get(0,0)+types.get(1,0)} "
-          f"爬虫:{types.get(3,0)+types.get(4,0)}) "
-          f"spider={SPIDER_URL or '已移除(无插件/无扫码)'}")
+          f"爬虫:{types.get(3,0)+types.get(4,0)}) spider={SPIDER_URL or '未配置'}")
 
     # ── 5. 多仓版 tvbox_multi.json ──
-    # 只收录未声明 spider JAR 的源, 避免用户切换仓库时又加载到广告插件
+    # 先放本仓库自己的两个配置(含干净爬虫), 再放未声明 spider JAR 的上游源
+    base = _base_url()
+    store = []
+    if base:
+        store.extend([
+            {"sourceName": "全量版(含干净爬虫)", "sourceUrl": base + "tvbox_full.json"},
+            {"sourceName": "简洁版(无爬虫)", "sourceUrl": base + "tvbox.json"},
+        ])
     pinned_repos = set()
     for api_key, (src_name, _) in collect_sources.items():
         for kw in PINNED:
@@ -655,19 +726,11 @@ def main() -> int:
                   if u in multi_safe and not is_blocked_url(u)]
     pa = [x for x in safe_avail if x[0] in pinned_repos]
     oa = [x for x in safe_avail if x[0] not in pinned_repos]
-    store = [{"sourceName": f"[{lat}ms] {name}", "sourceUrl": url}
-             for name, url, lat in pa + oa]
-    # 如果一个安全源都没有, 退化成本仓库自己的配置, 保证多仓版可用
-    if not store:
-        base = _base_url()
-        if base:
-            store = [
-                {"sourceName": "全量版(无插件)", "sourceUrl": base + "tvbox_full.json"},
-                {"sourceName": "简洁版(无插件)", "sourceUrl": base + "tvbox.json"},
-            ]
+    store += [{"sourceName": f"[{lat}ms] {name}", "sourceUrl": url}
+              for name, url, lat in pa + oa]
     multi = {"storeHouse": store}
     _write(os.path.join(OUT_DIR, "tvbox_multi.json"), multi)
-    print(f"  多仓版: {len(store)} 个仓库 (已排除声明 spider JAR 的源)")
+    print(f"  多仓版: {len(store)} 个仓库 (含本仓库干净爬虫配置)")
 
     # ── 6. 简洁版 tvbox.json ──
     collect_sites = []
@@ -695,8 +758,10 @@ def main() -> int:
     meta = {"updated": ts, "sources_available": len(avail),
             "collect_available": len(collect_results),
             "sites_full": len(all_sites), "spider": SPIDER_URL,
-            "spider_removed": not SPIDER_URL,
-            "jar_dependent_sites_removed": dropped["jar_type"],
+            "spider_kind": "clean-catvodspider",
+            "spider_classes": len(SPIDER_CLASSES),
+            "unsupported_spider_sites_removed": dropped["unsupported"],
+            "disallowed_type_sites_removed": dropped["jar_type"],
             "ad_keyword_sites_removed": dropped["ad"]}
     _write(os.path.join(OUT_DIR, "status.json"), meta)
     _write_index(OUT_DIR, meta)
@@ -738,7 +803,7 @@ padding:2px 10px;font-size:.8rem;margin-right:6px}}</style></head><body>
 <p><span class="badge">更新于 {meta['updated']}</span>
 <span class="badge">可用源 {meta['sources_available']}</span>
 <span class="badge">全量站点 {meta['sites_full']}</span>
-<span class="badge">无插件 / 无需扫码</span></p>
+<span class="badge">干净爬虫 / 无扫码广告</span></p>
 <ul>
   <li><b>简洁版</b>(推荐): {link('tvbox.json')}</li>
   <li><b>全量版</b>: {link('tvbox_full.json')}</li>

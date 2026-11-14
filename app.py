@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import http.server
 import os
+import shutil
 import subprocess
 import sys
 import threading
@@ -33,6 +34,23 @@ RUN_ON_START = os.environ.get("RUN_ON_START", "1") == "1"
 
 _update_lock = threading.Lock()
 _last = {"started": None, "finished": None, "ok": None}
+
+
+def sync_spider() -> None:
+    """把镜像里的干净爬虫 JAR 同步到 HTTP 数据目录。"""
+    src = os.path.join(BASE, "spider")
+    dst = os.path.join(DATA_DIR, "spider")
+    if not os.path.isdir(src):
+        return
+    try:
+        os.makedirs(dst, exist_ok=True)
+        for name in ("custom_spider.jar", "custom_spider.jar.md5"):
+            s = os.path.join(src, name)
+            if os.path.exists(s):
+                shutil.copy2(s, os.path.join(dst, name))
+        print(f"[server] 已同步干净爬虫 JAR 到 {dst}", flush=True)
+    except Exception as e:  # noqa: BLE001
+        print(f"[server] 同步爬虫 JAR 失败: {e}", flush=True)
 
 
 def run_update() -> None:
@@ -88,6 +106,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
 def main() -> int:
     os.makedirs(DATA_DIR, exist_ok=True)
+    sync_spider()
     threading.Thread(target=scheduler, daemon=True).start()
     with http.server.ThreadingHTTPServer(("0.0.0.0", PORT), Handler) as httpd:
         print(f"[server] 监听 0.0.0.0:{PORT}, 数据目录 {DATA_DIR}", flush=True)

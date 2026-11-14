@@ -10,7 +10,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 COPY update.py app.py sources.txt ./
-
+COPY spider ./spider
 RUN mkdir -p /data
 VOLUME ["/data"]
 EXPOSE 8787

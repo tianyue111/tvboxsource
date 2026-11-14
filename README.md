@@ -1,12 +1,12 @@
 # TVBox 自建聚合源
 
 自动抓取公开 TVBox 源 → 过滤广告插件 → 合并 → 真实播放测速 → 每天由 GitHub Actions 自动更新。
-**不加载任何外部 spider JAR，不需要扫码看广告激活。**
+**保留爬虫站（type 3/4），但换成了本仓库自带的干净 CatVodSpider JAR，不需要扫码看广告激活。**
 
 > 本项目参考了 [25175/tvyuan](https://github.com/25175/tvyuan) 的思路。原项目/上游配置里的
-> `spider` JAR（常伪装成 `.jpg;md5;...`，并用 `wexguard` 加固）可能内置
-> “扫码看广告才能激活”的逻辑，本仓库已将其彻底移除：
-> 输出配置的 `spider` 永远为空，只保留 type 0/1 直连采集站。
+> `spider` JAR（常伪装成 `.jpg;md5;...`，并用 `wexguard` 加固）内置了
+> “扫码看广告才能激活”的逻辑，且闭源不可审计。本仓库已将它替换为
+> [`spider/custom_spider.jar`](./spider/README.md)：从公开源码构建的干净 CatVodSpider。
 > 源清单由本仓库的 [`sources.txt`](./sources.txt) 自行维护，并支持从多仓配置里自动发现新源。
 
 ---
@@ -15,15 +15,15 @@
 
 | 位置 | 旧行为 | 现在的行为 |
 |------|--------|------------|
-| `spider` 字段 | 原样合并上游 JAR，可能弹扫码/广告激活 | **永远输出空字符串**，客户端不会下载任何 JAR |
-| type 3/4 站点 | 依赖 JAR 才能播放 | 默认全部丢弃，只保留 type 0/1 直连采集 API |
+| `spider` 字段 | 原样合并上游加固 JAR，会弹扫码/广告激活 | 固定指向**本仓库自带的干净 JAR**（`spider/custom_spider.jar`） |
+| type 3/4 爬虫站 | 依赖加固 JAR，部分类无法加载 | **保留**，但只保留干净 JAR 真正包含的 `csp_*` 类；JS/Python 爬虫站也保留 |
 | 站点/直播/解析 | 原样合并 | 命中 `扫码/看广告/激活/卡密/付费/收费/公众号/加群` 等关键字直接过滤 |
-| 域名 | 无限制 | `clbug.com`、`moji.com` 等广告/白嫖域名加入黑名单 |
-| 多仓版 | 收录所有源 | 只收录**未声明 spider JAR** 的源，避免切换仓库又加载到广告插件 |
-| Actions | 生成后直接提交 | 生成后先跑校验：`spider` 必须为空、站点必须是 type 0/1、无广告域名，否则拒绝提交 |
+| 域名 | 无限制 | `clbug.com`、`moji.com`、`wexguard` 等广告/加固域名加入黑名单 |
+| 多仓版 | 收录所有源 | 把本仓库的“全量版(含干净爬虫)”放在第一项，再收录未声明加固 JAR 的源 |
+| Actions | 生成后直接提交 | 生成后校验：`spider` 必须是本仓库 JAR、无广告关键字/域名、JAR MD5 正确，否则拒绝提交 |
 
-> 如果你有自己编译、可审计的可信 JAR，可以用环境变量 `SPIDER_URL` 显式指定；
-> 默认为空，**普通用户不要设置**。
+> 如果你有自己编译、可审计的可信 JAR，可用环境变量 `SPIDER_URL` 显式指定；
+> 默认使用本仓库的干净 JAR。
 
 ---
 
@@ -32,15 +32,18 @@
 1. 读取 `sources.txt` 里维护的一批公开 TVBox 配置地址（GitHub / Gitee / 各类镜像）。
 2. 并发测延迟并抓取每个配置，只保留 `sites` / `lives` / `parses`，**丢弃上游 `spider`**。
 3. 过滤广告/扫码/激活类站点、直播、解析和多仓源（见上表）。
-4. 对采集站（type 0/1）做**真实播放测速**：请求列表 → 详情 → 拉 m3u8 → 下载 ts 分片 → 算持续速度。
-5. 按速度排序，输出三个文件：
-   - `tvbox.json`：简洁版（最快的前 10 个采集站，无需 JAR，开箱即用）
-   - `tvbox_full.json`：全量版（只含 type 0/1 采集站，`spider` 为空）
-   - `tvbox_multi.json`：多仓版（只收录无 spider JAR 的源，可在客户端里切换）
-6. 从抓到的多仓配置（`storeHouse`）里自动发现新的源，越跑越多。
+4. 对 type 3 爬虫站，按本仓库 `spider/custom_spider.jar` 里的实际类名过滤，不支持的类丢弃；
+   `drpy` / `py` 等 JS/Python 爬虫不依赖 JAR，直接保留。
+5. 对采集站（type 0/1）做**真实播放测速**：请求列表 → 详情 → 拉 m3u8 → 下载 ts 分片 → 算持续速度。
+6. 按速度排序，输出三个文件：
+   - `tvbox.json`：简洁版（最快的前 10 个采集站，**不带 JAR**，开箱即用）
+   - `tvbox_full.json`：全量版（type 0/1 采集站 + 干净 JAR 支持的 type 3/4 爬虫站）
+   - `tvbox_multi.json`：多仓版（第一项是本仓库全量版，后面是未声明加固 JAR 的上游源）
+7. 从抓到的多仓配置（`storeHouse`）里自动发现新的源，越跑越多。
 
-**为什么不再需要扫码？** 需要扫码看广告的只是 `clbug.com` 的源清单页面，以及某些
-加固 JAR 里的激活逻辑。本仓库把源清单固定在自己的 `sources.txt`，并且从不加载 JAR。
+**为什么不再需要扫码？** 因为原来的加固 JAR 已被替换。现在客户端只会下载本仓库的
+[`spider/custom_spider.jar`](./spider/README.md)，它由公开源码构建，不包含 `wexguard`
+或任何“扫码/看广告激活”逻辑。
 
 ---
 
@@ -178,17 +181,23 @@ https://example.com/tvbox.json
 ## 六、常见问题
 
 **Q：还需要扫码看广告吗？**
-不需要。`tvbox.json` / `tvbox_full.json` 的 `spider` 永远为空，客户端不会下载任何 JAR；
-只保留 type 0/1 直连采集站。workflow 还会在提交前自动校验，发现 `spider`、
-type 3/4 站点或广告域名就直接失败，不会把带广告的配置推回仓库。
+不需要。`tvbox_full.json` 的 `spider` 固定指向本仓库的
+[`spider/custom_spider.jar`](./spider/README.md)，这是从公开源码构建的干净 CatVodSpider；
+不会加载原来的 `wexguard` 加固 JAR。workflow 会在提交前校验 JAR 的 MD5、`spider` 地址、
+广告关键字/域名，校验失败就不会提交。
 
-**Q：为什么全量版的站点变少了？**
-旧版全量版里约 1000 个 type 3 站点都依赖同一个第三方 JAR（就是带扫码广告激活的那个）。
-去掉 JAR 后这些站点无法播放，所以全部丢弃；保留的 type 0/1 采集站不需要任何插件。
+**Q：为什么全量版的爬虫站变少了？**
+旧版全量版把很多不同来源的 type 3 站点混在一起，再统一指向一个加固 JAR；
+但那个 JAR 实际只包含部分类，而且带扫码广告激活。现在改用干净 JAR 后，
+只保留 JAR 真正包含的 `csp_*` 类（约 49 个类、上百个站点），以及不依赖 JAR 的
+`drpy` / `py` 等 JS/Python 爬虫站；其余类不支持的直接丢弃，避免坏站。
 
-**Q：我想恢复爬虫站怎么办？**
-不建议。如果你确实有自己编译、可审计的 JAR，可在 workflow 的 `SPIDER_URL` 填入地址；
-默认请保持为空。
+**Q：我想让更多爬虫站可用怎么办？**
+把对应站点的**公开源码**编译进 `spider/custom_spider.jar`，或换一个更全的可审计 JAR，
+然后更新 `spider/custom_spider.jar.md5` 并推送。不要使用来源不明或带 `;md5;` 伪装的加固 JAR。
+
+**Q：我想完全不用爬虫 JAR 怎么办？**
+用 `tvbox.json`（简洁版），它只包含 type 0/1 直连采集站，`spider` 为空。
 
 **Q：为什么有些源测速失败？**
 部分采集站封锁海外 IP / 需要特定线路。配置 `CF_PROXY` 后脚本会自动用代理重试一次。
@@ -214,7 +223,9 @@ type 3/4 站点或广告域名就直接失败，不会把带广告的配置推�
 | `update.py` | 核心脚本：抓取 / 过滤广告插件 / 测速 / 生成 JSON（纯标准库，无第三方依赖） |
 | `app.py` | Unraid/Docker 服务：内置定时更新 + HTTP 提供配置 |
 | `sources.txt` | 源清单（自行维护） |
+| `spider/custom_spider.jar` | 干净 CatVodSpider JAR（公开源码构建，无扫码广告） |
+| `spider/README.md` | JAR 的来源、MD5、更新方法 |
 | `Dockerfile` / `docker-compose.yml` | 容器构建 |
 | `cloudflare/worker.js` | 可选代理 |
-| `.github/workflows/update.yml` | 每天自动更新 + 去广告校验 |
+| `.github/workflows/update.yml` | 每天自动更新 + 干净 JAR / 去广告校验 |
 | `.github/workflows/docker.yml` | 自动构建并推送镜像到 GHCR |
