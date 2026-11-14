@@ -9,6 +9,7 @@ on:
     paths:
       - 'sources.txt'
       - 'update.py'
+      - '.github/workflows/update.yml'
 
 permissions:
   contents: write
@@ -36,13 +37,56 @@ jobs:
           CF_PROXY: ${{ secrets.CF_PROXY }}
           MAX_SOURCES: '300'
           MAX_COLLECT: '80'
+          # 显式禁止任何外部 spider JAR，只保留 type 0/1 直连采集站
+          SPIDER_URL: ''
+          ALLOWED_TYPES: '0,1'
         run: python3 update.py
+
+      - name: 校验生成结果（必须无插件 / 无扫码广告）
+        run: |
+          python3 - <<'PY'
+          import json, sys
+
+          FORBIDDEN_DOMAINS = ("clbug.com", "moji.com")
+          FORBIDDEN_WORDS = ("扫码", "看广告", "广告解锁", "激活", "卡密",
+                             "付费", "收费", "打赏", "公众号", "加群")
+          problems = []
+
+          for name in ("tvbox.json", "tvbox_full.json"):
+              with open(name, encoding="utf-8") as f:
+                  d = json.load(f)
+              if d.get("spider"):
+                  problems.append(f"{name}: spider 字段不为空 -> {d['spider']!r}")
+              for s in d.get("sites", []):
+                  if s.get("type") not in (0, 1):
+                      problems.append(f"{name}: 站点 {s.get('key')!r} type={s.get('type')}")
+                  blob = json.dumps(s, ensure_ascii=False).lower()
+                  if any(w.lower() in blob for w in FORBIDDEN_WORDS):
+                      problems.append(f"{name}: 站点 {s.get('key')!r} 命中广告关键字")
+                  if any(x in blob for x in FORBIDDEN_DOMAINS):
+                      problems.append(f"{name}: 站点 {s.get('key')!r} 使用广告域名")
+              for p in d.get("parses", []):
+                  if any(x in json.dumps(p, ensure_ascii=False).lower() for x in FORBIDDEN_DOMAINS):
+                      problems.append(f"{name}: 解析 {p.get('name')!r} 使用广告域名")
+
+          with open("tvbox_multi.json", encoding="utf-8") as f:
+              multi = json.load(f)
+          for repo in multi.get("storeHouse", []):
+              url = str(repo.get("sourceUrl", "")).lower()
+              if any(x in url for x in FORBIDDEN_DOMAINS):
+                  problems.append(f"tvbox_multi.json: 广告仓库 {url}")
+
+          if problems:
+              print("\n".join(problems))
+              sys.exit("发现需要扫码/看广告的插件或站点，拒绝提交")
+          print("校验通过：spider 为空，只保留 type 0/1 直连采集站")
+          PY
 
       - name: 提交并推送
         run: |
           git config user.name  "tvbox-bot"
           git config user.email "tvbox-bot@users.noreply.github.com"
-          git add -A
+          git add tvbox.json tvbox_full.json tvbox_multi.json status.json index.html
           if git diff --cached --quiet; then
             echo "本次无变更"
             exit 0
