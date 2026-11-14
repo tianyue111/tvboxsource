@@ -58,6 +58,10 @@ jobs:
           FORBIDDEN_DOMAINS = ("clbug.com", "moji.com", "wexguard")
           FORBIDDEN_WORDS = ("扫码", "看广告", "广告解锁", "激活", "卡密",
                              "付费", "收费", "打赏", "公众号", "加群")
+          ADULT_MARKERS = ("🔞", "18+", "成人", "番号", "麻豆", "天美",
+                           "果冻传媒", "星空传媒", "精东", "porn", "pron",
+                           "jable", "javdb", "hanime", "91porn", "色播",
+                           "肉视频", "女优")
           problems = []
 
           def check_sites(name, sites, allowed_types):
@@ -85,6 +89,29 @@ jobs:
               if any(x in json.dumps(p, ensure_ascii=False).lower() for x in FORBIDDEN_DOMAINS):
                   problems.append(f"tvbox_full.json: 解析 {p.get('name')!r} 使用广告域名")
 
+          for name in ("tvbox_nonadult.json", "tvbox_adult.json"):
+              with open(name, encoding="utf-8") as f:
+                  d = json.load(f)
+              if d.get("spider") != EXPECTED:
+                  problems.append(f"{name}: spider 不是本仓库干净 JAR -> {d.get('spider')!r}")
+              check_sites(name, d.get("sites", []), (0, 1, 3, 4))
+              for p in d.get("parses", []):
+                  if any(x in json.dumps(p, ensure_ascii=False).lower() for x in FORBIDDEN_DOMAINS):
+                      problems.append(f"{name}: 解析 {p.get('name')!r} 使用广告域名")
+              if name == "tvbox_nonadult.json":
+                  for s in d.get("sites", []):
+                      blob = json.dumps(s, ensure_ascii=False).lower()
+                      if any(m.lower() in blob for m in ADULT_MARKERS):
+                          problems.append(f"{name}: 成人站点混入 {s.get('key')!r}")
+                  for l in d.get("lives", []):
+                      blob = json.dumps(l, ensure_ascii=False).lower()
+                      if any(m.lower() in blob for m in ADULT_MARKERS):
+                          problems.append(f"{name}: 成人直播混入 {l.get('name')!r}")
+                  for p in d.get("parses", []):
+                      blob = json.dumps(p, ensure_ascii=False).lower()
+                      if any(m.lower() in blob for m in ADULT_MARKERS):
+                          problems.append(f"{name}: 成人解析混入 {p.get('name')!r}")
+
           with open("status.json", encoding="utf-8") as f:
               status = json.load(f)
           if status.get("spider") != EXPECTED:
@@ -100,14 +127,14 @@ jobs:
           if problems:
               print("\n".join(problems))
               sys.exit("校验失败，拒绝提交")
-          print("校验通过：spider 指向本仓库干净 JAR，保留 type 0/1/3/4，无扫码广告")
+          print("校验通过：spider 指向本仓库干净 JAR，全部/非成人/成人分类正常，无扫码广告")
           PY
 
       - name: 提交并推送
         run: |
           git config user.name  "tvbox-bot"
           git config user.email "tvbox-bot@users.noreply.github.com"
-          git add tvbox.json tvbox_full.json tvbox_multi.json status.json index.html
+          git add tvbox.json tvbox_full.json tvbox_nonadult.json tvbox_adult.json tvbox_multi.json status.json index.html
           if git diff --cached --quiet; then
             echo "本次无变更"
             exit 0

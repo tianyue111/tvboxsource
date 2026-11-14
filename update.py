@@ -90,6 +90,34 @@ AD_BLOCK_KEYWORDS = [x.strip() for x in os.environ.get(
     "扫码,扫码看,看广告,广告解锁,激活码,激活,卡密,付费,收费,打赏,公众号,加群"
 ).split(",") if x.strip()]
 
+# ── 成人 / 非成人分类 ──
+# 仅用于生成 tvbox_nonadult.json(非成人全部) 和 tvbox_adult.json(成人全部),
+# 不影响 tvbox_full.json(全部)。分类是启发式的, 可用 ADULT_KEYWORDS 追加关键字。
+ADULT_PATTERNS = [
+    r"🔞", r"18\+", r"18禁", r"18av", r"18sex", r"18porn", r"18岁",
+    r"18资源", r"18视频", r"181818", r"live18", r"r18", r"nsfw",
+    r"成人", r"里番", r"无码", r"有码", r"番号", r"女优", r"麻豆",
+    r"蜜桃", r"天美", r"果冻传媒", r"星空传媒", r"精东", r"探花",
+    r"约炮", r"一夜情", r"三级片?", r"伦理片?", r"情色", r"色情",
+    r"色播", r"色猫", r"色南国", r"色库", r"性爱", r"做爱", r"自慰",
+    r"口交", r"淫", r"嫖", r"妓", r"黄片", r"黄网", r"裸",
+    r"porn", r"pron", r"hentai", r"jable", r"javdb", r"hanime",
+    r"missav", r"supjav", r"netflav", r"sukebei", r"xvideo", r"xnxx",
+    r"pornhub", r"onlyfans", r"fansly", r"(?<![a-z])swag(?![a-z])",
+    r"91麻豆", r"91精品", r"91porn", r"91av", r"91md", r"91自拍", r"91视频", r"91资源",
+    r"(?<![a-z])av(?![a-z])", r"jav(?![a-z])", r"sex",
+    r"av片", r"av网", r"av资源", r"成人av",
+    r"souav", r"youav", r"owoav", r"avhub", r"avzy", r"kxgav",
+    r"(?<![a-z])lav(?![a-z])",
+    r"福利视频", r"福利片", r"福利影院", r"福利资源", r"肉视频",
+    r"国产传媒", r"几个传媒", r"美腿丝袜", r"花活",
+    r"(?<![a-z])xhm(?![a-z])", r"推特",
+]
+_extra_adult = os.environ.get("ADULT_KEYWORDS", "").strip()
+if _extra_adult:
+    ADULT_PATTERNS += [re.escape(x.strip()) for x in _extra_adult.split(",") if x.strip()]
+ADULT_RE = re.compile("|".join(ADULT_PATTERNS), re.IGNORECASE)
+
 _SSL = ssl.create_default_context()
 _SSL.check_hostname = False
 _SSL.verify_mode = ssl.CERT_NONE
@@ -196,6 +224,15 @@ def is_blocked_text(*values) -> bool:
     """名称/字段里出现扫码、激活、卡密等关键字。"""
     blob = " ".join(str(v) for v in values if v).lower()
     return any(k.lower() in blob for k in AD_BLOCK_KEYWORDS)
+
+
+def is_adult_item(item: dict) -> bool:
+    """启发式判断站点/直播是否成人内容。"""
+    if not isinstance(item, dict):
+        return False
+    text = " ".join(str(item.get(k, "")) for k in
+                    ("key", "name", "api", "url", "ext"))
+    return bool(ADULT_RE.search(text))
 
 
 def looks_like_binary_plugin(value) -> bool:
@@ -696,6 +733,13 @@ def main() -> int:
         s.pop("_speed", None)
         s.pop("_speed_ttfb", None)
 
+    # 成人 / 非成人分类（用于额外输出两个分类配置）
+    adult_sites = [s for s in all_sites if is_adult_item(s)]
+    nonadult_sites = [s for s in all_sites if not is_adult_item(s)]
+    adult_lives = [l for l in all_lives if is_adult_item(l)]
+    nonadult_lives = [l for l in all_lives if not is_adult_item(l)]
+    nonadult_parses = [p for p in all_parses if not is_adult_item(p)]
+
     # ── 4. 全量版 tvbox_full.json ──
     # 全量版保留爬虫站(type 3/4), 但 spider 指向本仓库自带的干净 JAR,
     # 不再引用任何第三方加固 JAR, 因此不会出现"扫码看广告才能激活"。
@@ -708,13 +752,25 @@ def main() -> int:
     print(f"  全量版: {len(all_sites)} 站点 (采集:{types.get(0,0)+types.get(1,0)} "
           f"爬虫:{types.get(3,0)+types.get(4,0)}) spider={SPIDER_URL or '未配置'}")
 
+    # ── 4.1 非成人全部 / 成人全部 ──
+    nonadult_json = {"spider": SPIDER_URL, "sites": nonadult_sites,
+                     "lives": nonadult_lives, "parses": nonadult_parses}
+    _write(os.path.join(OUT_DIR, "tvbox_nonadult.json"), nonadult_json)
+    adult_json = {"spider": SPIDER_URL, "sites": adult_sites,
+                  "lives": adult_lives, "parses": all_parses}
+    _write(os.path.join(OUT_DIR, "tvbox_adult.json"), adult_json)
+    print(f"  非成人全部: {len(nonadult_sites)} 站点 / {len(nonadult_lives)} 直播")
+    print(f"  成人全部: {len(adult_sites)} 站点 / {len(adult_lives)} 直播")
+
     # ── 5. 多仓版 tvbox_multi.json ──
     # 先放本仓库自己的两个配置(含干净爬虫), 再放未声明 spider JAR 的上游源
     base = _base_url()
     store = []
     if base:
         store.extend([
-            {"sourceName": "全量版(含干净爬虫)", "sourceUrl": base + "tvbox_full.json"},
+            {"sourceName": "全部(含干净爬虫)", "sourceUrl": base + "tvbox_full.json"},
+            {"sourceName": "非成人全部", "sourceUrl": base + "tvbox_nonadult.json"},
+            {"sourceName": "成人全部", "sourceUrl": base + "tvbox_adult.json"},
             {"sourceName": "简洁版(无爬虫)", "sourceUrl": base + "tvbox.json"},
         ])
     pinned_repos = set()
@@ -760,6 +816,10 @@ def main() -> int:
             "sites_full": len(all_sites), "spider": SPIDER_URL,
             "spider_kind": "clean-catvodspider",
             "spider_classes": len(SPIDER_CLASSES),
+            "sites_nonadult": len(nonadult_sites),
+            "sites_adult": len(adult_sites),
+            "lives_nonadult": len(nonadult_lives),
+            "lives_adult": len(adult_lives),
             "unsupported_spider_sites_removed": dropped["unsupported"],
             "disallowed_type_sites_removed": dropped["jar_type"],
             "ad_keyword_sites_removed": dropped["ad"]}
@@ -803,10 +863,13 @@ padding:2px 10px;font-size:.8rem;margin-right:6px}}</style></head><body>
 <p><span class="badge">更新于 {meta['updated']}</span>
 <span class="badge">可用源 {meta['sources_available']}</span>
 <span class="badge">全量站点 {meta['sites_full']}</span>
+<span class="badge">非成人 {meta.get('sites_nonadult', 0)} / 成人 {meta.get('sites_adult', 0)}</span>
 <span class="badge">干净爬虫 / 无扫码广告</span></p>
 <ul>
   <li><b>简洁版</b>(推荐): {link('tvbox.json')}</li>
-  <li><b>全量版</b>: {link('tvbox_full.json')}</li>
+  <li><b>全部</b>(含爬虫): {link('tvbox_full.json')}</li>
+  <li><b>非成人全部</b>: {link('tvbox_nonadult.json')}</li>
+  <li><b>成人全部</b>: {link('tvbox_adult.json')}</li>
   <li><b>多仓版</b>: {link('tvbox_multi.json')}</li>
   <li>状态: {link('status.json')}</li>
 </ul>

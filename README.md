@@ -35,10 +35,12 @@
 4. 对 type 3 爬虫站，按本仓库 `spider/custom_spider.jar` 里的实际类名过滤，不支持的类丢弃；
    `drpy` / `py` 等 JS/Python 爬虫不依赖 JAR，直接保留。
 5. 对采集站（type 0/1）做**真实播放测速**：请求列表 → 详情 → 拉 m3u8 → 下载 ts 分片 → 算持续速度。
-6. 按速度排序，输出三个文件：
+6. 按速度排序，输出五个文件：
    - `tvbox.json`：简洁版（最快的前 10 个采集站，**不带 JAR**，开箱即用）
-   - `tvbox_full.json`：全量版（type 0/1 采集站 + 干净 JAR 支持的 type 3/4 爬虫站）
-   - `tvbox_multi.json`：多仓版（第一项是本仓库全量版，后面是未声明加固 JAR 的上游源）
+   - `tvbox_full.json`：全部（type 0/1 采集站 + 干净 JAR 支持的 type 3/4 爬虫站）
+   - `tvbox_nonadult.json`：**非成人全部**（过滤掉成人站点/直播，其余与全量版一致）
+   - `tvbox_adult.json`：**成人全部**（只保留成人站点/直播）
+   - `tvbox_multi.json`：多仓版（全部 / 非成人 / 成人 / 简洁版，可在客户端里切换）
 7. 从抓到的多仓配置（`storeHouse`）里自动发现新的源，越跑越多。
 
 **为什么不再需要扫码？** 因为原来的加固 JAR 已被替换。现在客户端只会下载本仓库的
@@ -69,7 +71,8 @@ git push -u origin main
 
 ### 3. 运行一次
 仓库 → **Actions → 更新 TVBox 源 → Run workflow**。
-几分钟后仓库根目录会出现 `tvbox.json` / `tvbox_full.json` / `tvbox_multi.json`。
+几分钟后仓库根目录会出现 `tvbox.json` / `tvbox_full.json` / `tvbox_nonadult.json` /
+`tvbox_adult.json` / `tvbox_multi.json`。
 
 ### 4. 拿到配置地址
 把下面地址复制到 TVBox / 影视仓 / 丰米(FongMi) 的配置地址：
@@ -77,7 +80,9 @@ git push -u origin main
 | 版本 | 地址 |
 |------|------|
 | 简洁版（推荐） | `https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox.json` |
-| 全量版 | `https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_full.json` |
+| 全部（含爬虫） | `https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_full.json` |
+| **非成人全部** | `https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_nonadult.json` |
+| **成人全部** | `https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_adult.json` |
 | 多仓版 | `https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_multi.json` |
 
 **国内加速**（GitHub raw 可能慢）：
@@ -196,6 +201,15 @@ https://example.com/tvbox.json
 把对应站点的**公开源码**编译进 `spider/custom_spider.jar`，或换一个更全的可审计 JAR，
 然后更新 `spider/custom_spider.jar.md5` 并推送。不要使用来源不明或带 `;md5;` 伪装的加固 JAR。
 
+**Q：成人 / 非成人是怎么分的？**
+按站点/直播的 `key`、`name`、`api`、`url`、`ext` 做关键字匹配（`🔞`、`18+`、`成人`、`番号`、
+`麻豆`、`天美`、`porn`、`jable`、`91porn`、`色播` 等）。分类是启发式的，
+如果漏掉或误判，可以在 workflow 的 `ADULT_KEYWORDS` 环境变量里用逗号追加关键字。
+`tvbox_nonadult.json` 会再经过一次强关键字校验，避免成人站点混入。
+
+**Q：成人版包含直播吗？**
+包含被识别为成人的直播；非成人版会排除这些直播和成人解析。普通解析是通用组件，两边都会保留。
+
 **Q：我想完全不用爬虫 JAR 怎么办？**
 用 `tvbox.json`（简洁版），它只包含 type 0/1 直连采集站，`spider` 为空。
 
@@ -225,6 +239,11 @@ https://example.com/tvbox.json
 | `sources.txt` | 源清单（自行维护） |
 | `spider/custom_spider.jar` | 干净 CatVodSpider JAR（公开源码构建，无扫码广告） |
 | `spider/README.md` | JAR 的来源、MD5、更新方法 |
+| `tvbox.json` | 简洁版（type 0/1，最快采集站，无 JAR） |
+| `tvbox_full.json` | 全部站点（采集 + 干净爬虫） |
+| `tvbox_nonadult.json` | 非成人全部 |
+| `tvbox_adult.json` | 成人全部 |
+| `tvbox_multi.json` | 多仓版（全部 / 非成人 / 成人 / 简洁） |
 | `Dockerfile` / `docker-compose.yml` | 容器构建 |
 | `cloudflare/worker.js` | 可选代理 |
 | `.github/workflows/update.yml` | 每天自动更新 + 干净 JAR / 去广告校验 |
