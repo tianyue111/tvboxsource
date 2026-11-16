@@ -2,17 +2,62 @@
   "spider": "",
   "sites": [
     {
-      "key": "🎀红牛┃采集",
-      "name": "[3113KB/s|2992ms|稳] 🎀红牛┃采集",
+      "key": "360┃直连",
+      "name": "[758KB/s|1991ms|稳] 360┃直连",
       "type": 1,
-      "api": "https://www.hongniuzy2.com/api.php/provide/vod/",
+      "api": "https://360zy.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "三六零",
+      "name": "[756KB/s|2031ms|稳] 三六零",
+      "type": 1,
+      "api": "https://360zy.com/api.php/provide/vod",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "🌼虎牙┃采集🌼",
+      "name": "[8884KB/s|271ms|稳] 🌼虎牙┃采集🌼",
+      "type": 1,
+      "api": "https://www.huyaapi.com/api.php/provide/vod/from/hym3u8",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "烂大街",
+      "name": "[7632KB/s|411ms|稳] 烂大街",
+      "type": 1,
+      "api": "https://www.huyaapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "🌼金鹰┃资源🌼",
+      "name": "[6559KB/s|1980ms|稳] 🌼金鹰┃资源🌼",
+      "type": 1,
+      "api": "https://jyzyapi.com/provide/vod/from/jinyingm3u8/at/json",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "金鹰影视",
+      "name": "[5945KB/s|1234ms|稳] 金鹰影视",
+      "type": 0,
+      "api": "https://jyzyapi.com/provide/vod/from/jinyingm3u8/at/xml/",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 0
     },
     {
       "key": "奶香 | 采集",
-      "name": "[2898KB/s|707ms|稳] 奶香 | 采集",
+      "name": "[5607KB/s|601ms|稳] 奶香 | 采集",
       "type": 1,
       "api": "https://naixxzy.com/api.php/provide/vod/",
       "searchable": 1,
@@ -20,8 +65,17 @@
       "filterable": 0
     },
     {
+      "key": "iKun资源",
+      "name": "[5329KB/s|885ms|稳] iKun资源",
+      "type": 0,
+      "api": "https://ikunzyapi.com/api.php/provide/vod/at/xml",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
       "key": "鸡坤 | 采集",
-      "name": "[2887KB/s|623ms|稳] 鸡坤 | 采集",
+      "name": "[5128KB/s|643ms|稳] 鸡坤 | 采集",
       "type": 1,
       "api": "https://jkunzyapi.com/api.php/provide/vod/",
       "searchable": 1,
@@ -29,64 +83,10 @@
       "filterable": 0
     },
     {
-      "key": "🎀光速┃采集",
-      "name": "[2454KB/s|463ms|稳] 🎀光速┃采集",
+      "key": "🌼如意┃影视🌼",
+      "name": "[3741KB/s|1409ms|稳] 🌼如意┃影视🌼",
       "type": 1,
-      "api": "http://api.guangsuapi.com/api.php/provide/vod/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
-      "key": "豪华资源",
-      "name": "[2401KB/s|487ms|稳] 豪华资源",
-      "type": 1,
-      "api": "https://hhzyapi.com/api.php/provide/vod",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
-      "key": "💥┃火狐2K┃有广",
-      "name": "[2220KB/s|502ms|稳] 💥┃火狐2K┃有广",
-      "type": 1,
-      "api": "https://hhzyapi.com/api.php/provide/vod/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
-      "key": "极速资源",
-      "name": "[2131KB/s|508ms|稳] 极速资源",
-      "type": 1,
-      "api": "https://jszyapi.com/api.php/provide/vod/at/json",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
-      "key": "魔都资源采集网",
-      "name": "[2069KB/s|699ms|稳] 魔都资源采集网",
-      "type": 0,
-      "api": "https://www.mdzyapi.com/api.php/provide/vod/at/xml/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
-      "key": "新浪资源",
-      "name": "[1807KB/s|412ms|稳] 新浪资源",
-      "type": 0,
-      "api": "https://api.xinlangapi.com/xinlangapi.php/provide/vod/at/xml/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
-      "key": "黑料",
-      "name": "[1766KB/s|1051ms|稳] 黑料",
-      "type": 1,
-      "api": "https://www.heiliaozyapi.com/api.php/provide/vod/",
+      "api": "http://cj.rycjapi.com/api.php/provide/vod",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 0
