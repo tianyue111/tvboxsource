@@ -1,16 +1,16 @@
 {
-  "updated": "2026-11-20 01:47:22",
-  "sources_available": 90,
-  "collect_available": 34,
-  "sites_full": 582,
+  "updated": "2026-11-21 01:34:35",
+  "sources_available": 88,
+  "collect_available": 23,
+  "sites_full": 578,
   "spider": "https://raw.githubusercontent.com/tianyue111/tvboxsource/main/spider/custom_spider.jar",
   "spider_kind": "clean-catvodspider",
   "spider_classes": 119,
-  "sites_nonadult": 493,
+  "sites_nonadult": 489,
   "sites_adult": 89,
-  "lives_nonadult": 87,
+  "lives_nonadult": 85,
   "lives_adult": 19,
-  "unsupported_spider_sites_removed": 1344,
+  "unsupported_spider_sites_removed": 1299,
   "disallowed_type_sites_removed": 0,
-  "ad_keyword_sites_removed": 17
+  "ad_keyword_sites_removed": 16
 }
