@@ -77,7 +77,7 @@ else:
 SPIDER_ENABLED = bool(SPIDER_URL)
 
 # 国内 GitHub 代理前缀（只用于 *_cn.json 变体，默认文件保持 raw 地址不变）
-PROXY_PREFIX = os.environ.get("PROXY_PREFIX", "https://gh-proxy.com/").strip()
+PROXY_PREFIX = os.environ.get("PROXY_PREFIX", "https://gh-proxy.org/").strip()
 if PROXY_PREFIX and not PROXY_PREFIX.endswith("/"):
     PROXY_PREFIX += "/"
 
@@ -252,11 +252,28 @@ def proxy_github(url):
     """把 GitHub 直连地址换成国内可访问的代理地址。"""
     if not isinstance(url, str) or not url or not PROXY_PREFIX:
         return url
+    url = normalize_proxy(url)
     if url.startswith(PROXY_PREFIX):
         return url
     if url.startswith(_GITHUB_PREFIXES):
         return PROXY_PREFIX + url
     return url
+
+
+_PROXY_HOST_RE = re.compile(r"https?://gh-proxy\.(?:com|org)/", re.I)
+
+
+def normalize_proxy(value):
+    """把旧的 gh-proxy.com 代理地址统一替换成当前 PROXY_PREFIX。"""
+    if not PROXY_PREFIX:
+        return value
+    if isinstance(value, str):
+        return _PROXY_HOST_RE.sub(PROXY_PREFIX, value)
+    if isinstance(value, list):
+        return [normalize_proxy(x) for x in value]
+    if isinstance(value, dict):
+        return {k: normalize_proxy(v) for k, v in value.items()}
+    return value
 
 
 def proxy_deep(value):
@@ -788,8 +805,8 @@ def main() -> int:
     # ── 4. 全量版 tvbox_full.json ──
     # 全量版保留爬虫站(type 3/4), 但 spider 指向本仓库自带的干净 JAR,
     # 不再引用任何第三方加固 JAR, 因此不会出现"扫码看广告才能激活"。
-    full_json = {"spider": SPIDER_URL, "sites": all_sites,
-                 "lives": all_lives, "parses": all_parses}
+    full_json = normalize_proxy({"spider": SPIDER_URL, "sites": all_sites,
+                                "lives": all_lives, "parses": all_parses})
     _write(os.path.join(OUT_DIR, "tvbox_full.json"), full_json)
     types = {}
     for s in all_sites:
@@ -798,11 +815,11 @@ def main() -> int:
           f"爬虫:{types.get(3,0)+types.get(4,0)}) spider={SPIDER_URL or '未配置'}")
 
     # ── 4.1 非成人全部 / 成人全部 ──
-    nonadult_json = {"spider": SPIDER_URL, "sites": nonadult_sites,
-                     "lives": nonadult_lives, "parses": nonadult_parses}
+    nonadult_json = normalize_proxy({"spider": SPIDER_URL, "sites": nonadult_sites,
+                                     "lives": nonadult_lives, "parses": nonadult_parses})
     _write(os.path.join(OUT_DIR, "tvbox_nonadult.json"), nonadult_json)
-    adult_json = {"spider": SPIDER_URL, "sites": adult_sites,
-                  "lives": adult_lives, "parses": all_parses}
+    adult_json = normalize_proxy({"spider": SPIDER_URL, "sites": adult_sites,
+                                  "lives": adult_lives, "parses": all_parses})
     _write(os.path.join(OUT_DIR, "tvbox_adult.json"), adult_json)
     print(f"  非成人全部: {len(nonadult_sites)} 站点 / {len(nonadult_lives)} 直播")
     print(f"  成人全部: {len(adult_sites)} 站点 / {len(adult_lives)} 直播")
@@ -829,7 +846,7 @@ def main() -> int:
     oa = [x for x in safe_avail if x[0] not in pinned_repos]
     store += [{"sourceName": f"[{lat}ms] {name}", "sourceUrl": url}
               for name, url, lat in pa + oa]
-    multi = {"storeHouse": store}
+    multi = normalize_proxy({"storeHouse": store})
     _write(os.path.join(OUT_DIR, "tvbox_multi.json"), multi)
     print(f"  多仓版: {len(store)} 个仓库 (含本仓库干净爬虫配置)")
 
@@ -848,7 +865,7 @@ def main() -> int:
             "type": stype, "api": api,
             "searchable": 1, "quickSearch": 1, "filterable": 0,
         })
-    simple = {"spider": "", "sites": collect_sites, "lives": [], "parses": []}
+    simple = normalize_proxy({"spider": "", "sites": collect_sites, "lives": [], "parses": []})
     _write(os.path.join(OUT_DIR, "tvbox.json"), simple)
     print(f"  简洁版: {len(collect_sites)}/{SIMPLE_LIMIT} 站 (共 {len(collect_results)} 个可用)")
     for i, (ttfb, speed, api, _) in enumerate(collect_results[:SIMPLE_LIMIT], 1):

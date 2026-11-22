@@ -46,13 +46,13 @@ jobs:
           # 指向本仓库自带的干净 CatVodSpider JAR（无扫码/广告激活）
           SPIDER_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/spider/custom_spider.jar
           # 国内代理前缀，用于 *_cn.json 变体
-          PROXY_PREFIX: https://gh-proxy.com/
+          PROXY_PREFIX: https://gh-proxy.org/
         run: python3 update.py
 
       - name: 校验生成结果（默认 raw + 国内代理版 / 无扫码广告）
         env:
           EXPECTED_SPIDER: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/spider/custom_spider.jar
-          PROXY_PREFIX: https://gh-proxy.com/
+          PROXY_PREFIX: https://gh-proxy.org/
         run: |
           python3 - <<'PY'
           import json, os, sys

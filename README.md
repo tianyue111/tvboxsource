@@ -90,22 +90,22 @@ git push -u origin main
 
 默认的 `tvbox*.json` 保持 GitHub raw 地址，适合能直连 GitHub 的网络。
 国内网络请用对应的 `*_cn.json`，里面的 `spider` JAR 和站点里的 GitHub 爬虫地址都已换成
-`https://gh-proxy.com/` 代理：
+`https://gh-proxy.org/` 代理：
 
 | 版本 | 国内代理地址 |
 |------|--------------|
-| 简洁版 | `https://gh-proxy.com/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_cn.json` |
-| 全部（含爬虫） | `https://gh-proxy.com/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_full_cn.json` |
-| **非成人全部** | `https://gh-proxy.com/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_nonadult_cn.json` |
-| **成人全部** | `https://gh-proxy.com/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_adult_cn.json` |
-| 多仓版 | `https://gh-proxy.com/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_multi_cn.json` |
+| 简洁版 | `https://gh-proxy.org/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_cn.json` |
+| 全部（含爬虫） | `https://gh-proxy.org/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_full_cn.json` |
+| **非成人全部** | `https://gh-proxy.org/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_nonadult_cn.json` |
+| **成人全部** | `https://gh-proxy.org/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_adult_cn.json` |
+| 多仓版 | `https://gh-proxy.org/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_multi_cn.json` |
 
 > 代理前缀可通过 workflow 的 `PROXY_PREFIX` 修改，例如 `https://ghfast.top/`；
 > 修改后重新运行一次 Actions 即可重新生成全部 `*_cn.json`。
 
 其他可选加速：
 - jsDelivr：`https://cdn.jsdelivr.net/gh/你的用户名/tvboxsource@main/tvbox.json`
-- gh-proxy：`https://gh-proxy.com/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox.json`
+- gh-proxy：`https://gh-proxy.org/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox.json`
 - 或开启 GitHub Pages：Settings → Pages → Deploy from branch（main / root），
   得到 `https://你的用户名.github.io/tvboxsource/tvbox.json`
 
