@@ -2,8 +2,26 @@
   "spider": "",
   "sites": [
     {
-      "key": "360资源",
-      "name": "[510KB/s|1751ms|稳] 360资源",
+      "key": "🦚360┃采集",
+      "name": "[178KB/s|1780ms|中] 🦚360┃采集",
+      "type": 1,
+      "api": "https://360zy.com/api.php/provide/vod?",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "360┃直连",
+      "name": "[172KB/s|2398ms|中] 360┃直连",
+      "type": 1,
+      "api": "https://360zy.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "360",
+      "name": "[171KB/s|1942ms|中] 360",
       "type": 1,
       "api": "https://360zy.com/api.php/provide/vod",
       "searchable": 1,
@@ -11,17 +29,8 @@
       "filterable": 0
     },
     {
-      "key": "魔都资源采集网",
-      "name": "[2775KB/s|926ms|稳] 魔都资源采集网",
-      "type": 0,
-      "api": "https://www.mdzyapi.com/api.php/provide/vod/at/xml/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
       "key": "🎀红牛┃采集",
-      "name": "[2222KB/s|2721ms|稳] 🎀红牛┃采集",
+      "name": "[5427KB/s|3296ms|稳] 🎀红牛┃采集",
       "type": 1,
       "api": "https://www.hongniuzy2.com/api.php/provide/vod/",
       "searchable": 1,
@@ -29,64 +38,55 @@
       "filterable": 0
     },
     {
-      "key": "金鹰资源",
-      "name": "[1706KB/s|3097ms|稳] 金鹰资源",
+      "key": "奶香 | 采集",
+      "name": "[2492KB/s|752ms|稳] 奶香 | 采集",
       "type": 1,
-      "api": "https://jyzyapi.com/provide/vod/",
+      "api": "https://naixxzy.com/api.php/provide/vod/",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 0
     },
     {
-      "key": "💥丨爱看2k丨微广",
-      "name": "[1345KB/s|497ms|稳] 💥丨爱看2k丨微广",
+      "key": "鸡坤 | 采集",
+      "name": "[2425KB/s|713ms|稳] 鸡坤 | 采集",
       "type": 1,
-      "api": "https://ikunzyapi.com/api.php/provide/vod/from/ikm3u8/",
+      "api": "https://jkunzyapi.com/api.php/provide/vod/",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 0
     },
     {
-      "key": "魔都资源",
-      "name": "[1255KB/s|884ms|稳] 魔都资源",
+      "key": "大奶子 | 采集",
+      "name": "[2183KB/s|400ms|稳] 大奶子 | 采集",
       "type": 1,
-      "api": "https://www.mdzyapi.com/api.php/provide/vod/?ac=list",
+      "api": "https://apidanaizi.com/api.php/provide/vod",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 0
     },
     {
-      "key": "采集视频3",
-      "name": "[1093KB/s|692ms|稳] 采集视频3",
+      "key": "火速 | 采集",
+      "name": "[1162KB/s|873ms|稳] 火速 | 采集",
       "type": 1,
-      "api": "https://ikunzyapi.com/api.php/provide/vod",
+      "api": "https://api.huosuapi.cc/api.php/provide/vod/",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 0
     },
     {
-      "key": "🔞番号资源",
-      "name": "[1016KB/s|1019ms|稳] 🔞番号资源",
+      "key": "嘿嘿 | 采集",
+      "name": "[1128KB/s|777ms|稳] 嘿嘿 | 采集",
       "type": 1,
-      "api": "http://fhapi9.com/api.php/provide/vod/",
+      "api": "https://api.heiapi.cc/api.php/provide/vod/",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 0
     },
     {
-      "key": "🔞乐播",
-      "name": "[1007KB/s|800ms|稳] 🔞乐播",
-      "type": 0,
-      "api": "https://lbapi9.com/api.php/provide/vod/at/xml/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
-      "key": "🔞乐播资源",
-      "name": "[961KB/s|923ms|稳] 🔞乐播资源",
+      "key": "玉兔 | 采集",
+      "name": "[1054KB/s|704ms|稳] 玉兔 | 采集",
       "type": 1,
-      "api": "https://lbapi9.com/api.php/provide/vod/",
+      "api": "https://apiyutu.com/api.php/provide/vod/",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 0

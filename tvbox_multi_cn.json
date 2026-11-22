@@ -1,0 +1,20 @@
+{
+  "storeHouse": [
+    {
+      "sourceName": "全部(含干净爬虫)",
+      "sourceUrl": "https://gh-proxy.com/https://raw.githubusercontent.com/tianyue111/tvboxsource/main/tvbox_full_cn.json"
+    },
+    {
+      "sourceName": "非成人全部",
+      "sourceUrl": "https://gh-proxy.com/https://raw.githubusercontent.com/tianyue111/tvboxsource/main/tvbox_nonadult_cn.json"
+    },
+    {
+      "sourceName": "成人全部",
+      "sourceUrl": "https://gh-proxy.com/https://raw.githubusercontent.com/tianyue111/tvboxsource/main/tvbox_adult_cn.json"
+    },
+    {
+      "sourceName": "简洁版(无爬虫)",
+      "sourceUrl": "https://gh-proxy.com/https://raw.githubusercontent.com/tianyue111/tvboxsource/main/tvbox_cn.json"
+    }
+  ]
+}
