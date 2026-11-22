@@ -35,12 +35,13 @@
 4. 对 type 3 爬虫站，按本仓库 `spider/custom_spider.jar` 里的实际类名过滤，不支持的类丢弃；
    `drpy` / `py` 等 JS/Python 爬虫不依赖 JAR，直接保留。
 5. 对采集站（type 0/1）做**真实播放测速**：请求列表 → 详情 → 拉 m3u8 → 下载 ts 分片 → 算持续速度。
-6. 按速度排序，输出五个文件：
+6. 按速度排序，输出两套文件：默认 raw 版（给能直连 GitHub 的网络）和 `*_cn.json` 国内代理版。
    - `tvbox.json`：简洁版（最快的前 10 个采集站，**不带 JAR**，开箱即用）
    - `tvbox_full.json`：全部（type 0/1 采集站 + 干净 JAR 支持的 type 3/4 爬虫站）
    - `tvbox_nonadult.json`：**非成人全部**（过滤掉成人站点/直播，其余与全量版一致）
    - `tvbox_adult.json`：**成人全部**（只保留成人站点/直播）
    - `tvbox_multi.json`：多仓版（全部 / 非成人 / 成人 / 简洁版，可在客户端里切换）
+   - `*_cn.json`：以上五个文件的国内代理版，`spider` 和所有 GitHub 爬虫地址都走代理
 7. 从抓到的多仓配置（`storeHouse`）里自动发现新的源，越跑越多。
 
 **为什么不再需要扫码？** 因为原来的加固 JAR 已被替换。现在客户端只会下载本仓库的
@@ -85,7 +86,24 @@ git push -u origin main
 | **成人全部** | `https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_adult.json` |
 | 多仓版 | `https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_multi.json` |
 
-**国内加速**（GitHub raw 可能慢）：
+**国内加速（无法直连 GitHub 时用）**
+
+默认的 `tvbox*.json` 保持 GitHub raw 地址，适合能直连 GitHub 的网络。
+国内网络请用对应的 `*_cn.json`，里面的 `spider` JAR 和站点里的 GitHub 爬虫地址都已换成
+`https://gh-proxy.com/` 代理：
+
+| 版本 | 国内代理地址 |
+|------|--------------|
+| 简洁版 | `https://gh-proxy.com/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_cn.json` |
+| 全部（含爬虫） | `https://gh-proxy.com/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_full_cn.json` |
+| **非成人全部** | `https://gh-proxy.com/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_nonadult_cn.json` |
+| **成人全部** | `https://gh-proxy.com/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_adult_cn.json` |
+| 多仓版 | `https://gh-proxy.com/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox_multi_cn.json` |
+
+> 代理前缀可通过 workflow 的 `PROXY_PREFIX` 修改，例如 `https://ghfast.top/`；
+> 修改后重新运行一次 Actions 即可重新生成全部 `*_cn.json`。
+
+其他可选加速：
 - jsDelivr：`https://cdn.jsdelivr.net/gh/你的用户名/tvboxsource@main/tvbox.json`
 - gh-proxy：`https://gh-proxy.com/https://raw.githubusercontent.com/你的用户名/tvboxsource/main/tvbox.json`
 - 或开启 GitHub Pages：Settings → Pages → Deploy from branch（main / root），
@@ -245,6 +263,12 @@ https://example.com/tvbox.json
 | `tvbox_nonadult.json` | 非成人全部 |
 | `tvbox_adult.json` | 成人全部 |
 | `tvbox_multi.json` | 多仓版（全部 / 非成人 / 成人 / 简洁） |
+| `tvbox_cn.json` | 简洁版国内代理 |
+| `tvbox_full_cn.json` | 全部国内代理（spider 走代理） |
+| `tvbox_nonadult_cn.json` | 非成人全部国内代理 |
+| `tvbox_adult_cn.json` | 成人全部国内代理 |
+| `tvbox_multi_cn.json` | 多仓版国内代理 |
+| `status_cn.json` | 国内代理版状态 |
 | `Dockerfile` / `docker-compose.yml` | 容器构建 |
 | `cloudflare/worker.js` | 可选代理 |
 | `.github/workflows/update.yml` | 每天自动更新 + 干净 JAR / 去广告校验 |

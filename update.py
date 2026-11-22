@@ -76,6 +76,11 @@ else:
     SPIDER_URL = ""
 SPIDER_ENABLED = bool(SPIDER_URL)
 
+# 国内 GitHub 代理前缀（只用于 *_cn.json 变体，默认文件保持 raw 地址不变）
+PROXY_PREFIX = os.environ.get("PROXY_PREFIX", "https://gh-proxy.com/").strip()
+if PROXY_PREFIX and not PROXY_PREFIX.endswith("/"):
+    PROXY_PREFIX += "/"
+
 _DEFAULT_TYPES = "0,1,3,4" if SPIDER_ENABLED else "0,1"
 ALLOWED_TYPES = {int(x) for x in os.environ.get("ALLOWED_TYPES", _DEFAULT_TYPES).split(",")
                  if x.strip().isdigit()}
@@ -233,6 +238,46 @@ def is_adult_item(item: dict) -> bool:
     text = " ".join(str(item.get(k, "")) for k in
                     ("key", "name", "api", "url", "ext"))
     return bool(ADULT_RE.search(text))
+
+
+_GITHUB_PREFIXES = (
+    "https://raw.githubusercontent.com/", "http://raw.githubusercontent.com/",
+    "https://raw.github.com/", "http://raw.github.com/",
+    "https://github.com/", "http://github.com/",
+    "https://gist.githubusercontent.com/", "http://gist.githubusercontent.com/",
+)
+
+
+def proxy_github(url):
+    """把 GitHub 直连地址换成国内可访问的代理地址。"""
+    if not isinstance(url, str) or not url or not PROXY_PREFIX:
+        return url
+    if url.startswith(PROXY_PREFIX):
+        return url
+    if url.startswith(_GITHUB_PREFIXES):
+        return PROXY_PREFIX + url
+    return url
+
+
+def proxy_deep(value):
+    """递归替换 dict/list 里的 GitHub 地址。"""
+    if isinstance(value, str):
+        return proxy_github(value)
+    if isinstance(value, list):
+        return [proxy_deep(x) for x in value]
+    if isinstance(value, dict):
+        return {k: proxy_deep(v) for k, v in value.items()}
+    return value
+
+
+def to_cn_config(cfg: dict) -> dict:
+    """生成国内代理版配置：spider、站点 ext、直播、解析里的 GitHub 地址全部走代理。"""
+    if not isinstance(cfg, dict):
+        return cfg
+    out = {}
+    for k, v in cfg.items():
+        out[k] = proxy_github(v) if k == "spider" else proxy_deep(v)
+    return out
 
 
 def looks_like_binary_plugin(value) -> bool:
@@ -810,10 +855,45 @@ def main() -> int:
         host = api.split("/")[2] if "//" in api else api
         print(f"    #{i} [{speed}KB/s|{ttfb}ms] {host}")
 
+    # ── 6.1 国内代理版 (*_cn.json) ──
+    # 默认文件保持 GitHub raw 地址；CN 版把 spider、站点 ext、直播、解析里的
+    # GitHub 地址全部换成 PROXY_PREFIX，供无法直连 GitHub 的网络使用。
+    cn_simple = to_cn_config(simple)
+    cn_full = to_cn_config(full_json)
+    cn_nonadult = to_cn_config(nonadult_json)
+    cn_adult = to_cn_config(adult_json)
+    _write(os.path.join(OUT_DIR, "tvbox_cn.json"), cn_simple)
+    _write(os.path.join(OUT_DIR, "tvbox_full_cn.json"), cn_full)
+    _write(os.path.join(OUT_DIR, "tvbox_nonadult_cn.json"), cn_nonadult)
+    _write(os.path.join(OUT_DIR, "tvbox_adult_cn.json"), cn_adult)
+
+    # 多仓版 CN：指向 *_cn.json，而不是 raw 版
+    cn_map = {}
+    if base:
+        for raw_name, cn_name in (
+            ("tvbox_full.json", "tvbox_full_cn.json"),
+            ("tvbox_nonadult.json", "tvbox_nonadult_cn.json"),
+            ("tvbox_adult.json", "tvbox_adult_cn.json"),
+            ("tvbox.json", "tvbox_cn.json"),
+        ):
+            cn_map[base + raw_name] = base + cn_name
+    cn_store = []
+    for item in store:
+        u = item.get("sourceUrl", "")
+        cn_store.append({
+            "sourceName": item.get("sourceName", ""),
+            "sourceUrl": proxy_github(cn_map.get(u, u)),
+        })
+    multi_cn = {"storeHouse": cn_store}
+    _write(os.path.join(OUT_DIR, "tvbox_multi_cn.json"), multi_cn)
+    print(f"  国内代理版: 5 个文件 (代理前缀 {PROXY_PREFIX or '未启用'})")
+
     # ── 7. 元数据 + 落地页 ──
     meta = {"updated": ts, "sources_available": len(avail),
             "collect_available": len(collect_results),
             "sites_full": len(all_sites), "spider": SPIDER_URL,
+            "spider_cn": proxy_github(SPIDER_URL),
+            "proxy_prefix": PROXY_PREFIX,
             "spider_kind": "clean-catvodspider",
             "spider_classes": len(SPIDER_CLASSES),
             "sites_nonadult": len(nonadult_sites),
@@ -824,6 +904,7 @@ def main() -> int:
             "disallowed_type_sites_removed": dropped["jar_type"],
             "ad_keyword_sites_removed": dropped["ad"]}
     _write(os.path.join(OUT_DIR, "status.json"), meta)
+    _write(os.path.join(OUT_DIR, "status_cn.json"), to_cn_config(meta))
     _write_index(OUT_DIR, meta)
 
     print(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] 更新完成!")
@@ -849,6 +930,8 @@ def _write_index(out_dir: str, meta: dict) -> None:
     base = _base_url()
     def link(f):
         return f'<a href="{base}{f}">{f}</a>'
+    def plink(f):
+        return f'<a href="{proxy_github(base + f)}">{f}</a>'
     html = f"""<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -873,6 +956,15 @@ padding:2px 10px;font-size:.8rem;margin-right:6px}}</style></head><body>
   <li><b>多仓版</b>: {link('tvbox_multi.json')}</li>
   <li>状态: {link('status.json')}</li>
 </ul>
+<h2>国内代理版（无法直连 GitHub 时用）</h2>
+<ul>
+  <li><b>简洁版</b>: {plink('tvbox_cn.json')}</li>
+  <li><b>全部</b>(含爬虫): {plink('tvbox_full_cn.json')}</li>
+  <li><b>非成人全部</b>: {plink('tvbox_nonadult_cn.json')}</li>
+  <li><b>成人全部</b>: {plink('tvbox_adult_cn.json')}</li>
+  <li><b>多仓版</b>: {plink('tvbox_multi_cn.json')}</li>
+</ul>
+<p>代理前缀：{PROXY_PREFIX or '未启用'}</p>
 <p>把上面地址复制到 TVBox / 影视仓 / 丰米(FongMi) 的配置地址即可。</p>
 </body></html>"""
     with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f:
