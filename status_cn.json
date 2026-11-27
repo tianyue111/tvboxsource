@@ -1,18 +1,18 @@
 {
-  "updated": "2026-11-26 02:52:51",
-  "sources_available": 85,
-  "collect_available": 23,
-  "sites_full": 573,
+  "updated": "2026-11-27 02:54:53",
+  "sources_available": 90,
+  "collect_available": 22,
+  "sites_full": 582,
   "spider": "https://gh-proxy.org/https://raw.githubusercontent.com/tianyue111/tvboxsource/main/spider/custom_spider.jar",
   "spider_cn": "https://gh-proxy.org/https://raw.githubusercontent.com/tianyue111/tvboxsource/main/spider/custom_spider.jar",
   "proxy_prefix": "https://gh-proxy.org/",
   "spider_kind": "clean-catvodspider",
   "spider_classes": 119,
-  "sites_nonadult": 484,
+  "sites_nonadult": 493,
   "sites_adult": 89,
-  "lives_nonadult": 86,
+  "lives_nonadult": 87,
   "lives_adult": 19,
-  "unsupported_spider_sites_removed": 1297,
+  "unsupported_spider_sites_removed": 1339,
   "disallowed_type_sites_removed": 0,
-  "ad_keyword_sites_removed": 15
+  "ad_keyword_sites_removed": 16
 }
