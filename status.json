@@ -1,7 +1,7 @@
 {
-  "updated": "2026-11-27 02:54:53",
+  "updated": "2026-11-28 02:45:03",
   "sources_available": 90,
-  "collect_available": 22,
+  "collect_available": 18,
   "sites_full": 582,
   "spider": "https://raw.githubusercontent.com/tianyue111/tvboxsource/main/spider/custom_spider.jar",
   "spider_cn": "https://gh-proxy.org/https://raw.githubusercontent.com/tianyue111/tvboxsource/main/spider/custom_spider.jar",
@@ -12,7 +12,7 @@
   "sites_adult": 89,
   "lives_nonadult": 87,
   "lives_adult": 19,
-  "unsupported_spider_sites_removed": 1339,
+  "unsupported_spider_sites_removed": 1338,
   "disallowed_type_sites_removed": 0,
   "ad_keyword_sites_removed": 16
 }
